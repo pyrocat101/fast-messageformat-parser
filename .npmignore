@@ -1,0 +1,8 @@
+*.test.js
+*.test.ts
+/.vscode
+/src
+/yarn.lock
+/.prettierrc
+*.test.ts.snap
+*.test.ts.md
