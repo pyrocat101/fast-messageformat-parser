@@ -52,7 +52,7 @@ export class Parser {
     }
 
     parse(): Result<MessageFormatElement[], ParserError> {
-        if (this.offset !== 0) {
+        if (this.offset() !== 0) {
             throw Error('parser can only be used once');
         }
         return this.parseMessage(0, '', false);
@@ -65,8 +65,8 @@ export class Parser {
     ): Result<MessageFormatElement[], ParserError> {
         let elements: MessageFormatElement[] = [];
 
-        while (!this.isEOF) {
-            const char = this.char;
+        while (!this.isEOF()) {
+            const char = this.char();
             if (char === '{') {
                 const result = this.parseArgument(nestingLevel, expectingCloseTag);
                 if (result.err) {
@@ -163,7 +163,7 @@ export class Parser {
             const endTagStartPosition = this.clonePosition();
 
             if (this.bumpIf('</')) {
-                if (this.isEOF || !_isAlpha(this.codePoint)) {
+                if (this.isEOF() || !_isAlpha(this.codePoint())) {
                     return this.error(
                         ErrorKind.INVALID_TAG,
                         createLocation(endTagStartPosition, this.clonePosition()),
@@ -212,12 +212,12 @@ export class Parser {
     }
 
     private parseTagName(): string {
-        const startOffset = this.offset;
+        const startOffset = this.offset();
         this.bump(); // the first tag name character
-        while (!this.isEOF && _isPotentialElementNameChar(this.codePoint)) {
+        while (!this.isEOF() && _isPotentialElementNameChar(this.codePoint())) {
             this.bump();
         }
-        return this.message.slice(startOffset, this.offset);
+        return this.message.slice(startOffset, this.offset());
     }
 
     private parseLiteral(
@@ -263,8 +263,8 @@ export class Parser {
 
     tryParseLeftAngleBracket(): string | null {
         if (
-            !this.isEOF &&
-            this.char === '<' &&
+            !this.isEOF() &&
+            this.char() === '<' &&
             (this.ignoreTag ||
                 // If at the opening tag or closing tag position, bail.
                 !_isAlphaOrSlash(this.peek() || 0))
@@ -281,7 +281,7 @@ export class Parser {
      * nested messages as on the top level of the pattern. The new behavior is otherwise compatible.
      */
     private tryParseQuote(parentArgType: ArgType): string | null {
-        if (this.isEOF || this.char !== "'") {
+        if (this.isEOF() || this.char() !== "'") {
             return null;
         }
 
@@ -303,12 +303,12 @@ export class Parser {
         }
 
         this.bump(); // apostrophe
-        let value = this.char; // escaped char
+        let value = this.char(); // escaped char
         this.bump();
 
         // read chars until the optional closing apostrophe is found
-        while (!this.isEOF) {
-            const ch = this.char;
+        while (!this.isEOF()) {
+            const ch = this.char();
             if (ch === "'") {
                 if (this.peek() === 39 /* `'` */) {
                     value += "'";
@@ -329,10 +329,10 @@ export class Parser {
     }
 
     private tryParseUnquoted(nestingLevel: number, parentArgType: ArgType): string | null {
-        if (this.isEOF) {
+        if (this.isEOF()) {
             return null;
         }
-        const ch = this.char;
+        const ch = this.char();
 
         if (
             ch === '<' ||
@@ -356,14 +356,14 @@ export class Parser {
 
         this.bumpSpace();
 
-        if (this.isEOF) {
+        if (this.isEOF()) {
             return this.error(
                 ErrorKind.EXPECT_ARGUMENT_CLOSING_BRACE,
                 createLocation(openingBracePosition, this.clonePosition()),
             );
         }
 
-        if (this.char === '}') {
+        if (this.char() === '}') {
             this.bump();
             return this.error(
                 ErrorKind.EMPTY_ARGUMENT,
@@ -382,14 +382,14 @@ export class Parser {
 
         this.bumpSpace();
 
-        if (this.isEOF) {
+        if (this.isEOF()) {
             return this.error(
                 ErrorKind.EXPECT_ARGUMENT_CLOSING_BRACE,
                 createLocation(openingBracePosition, this.clonePosition()),
             );
         }
 
-        switch (this.char) {
+        switch (this.char()) {
             // Simple argument: `{name}`
             case '}': {
                 this.bump(); // `}`
@@ -408,7 +408,7 @@ export class Parser {
                 this.bump(); // `,`
                 this.bumpSpace();
 
-                if (this.isEOF) {
+                if (this.isEOF()) {
                     return this.error(
                         ErrorKind.EXPECT_ARGUMENT_CLOSING_BRACE,
                         createLocation(openingBracePosition, this.clonePosition()),
@@ -438,10 +438,10 @@ export class Parser {
         const startingPosition = this.clonePosition();
 
         while (true) {
-            if (this.isEOF) {
+            if (this.isEOF()) {
                 break;
             }
-            const ch = this.char;
+            const ch = this.char();
             if (WHITESPACE_RE.test(ch) || PATTERN_SYNTAX_RE.test(ch)) {
                 break;
             }
@@ -670,7 +670,7 @@ export class Parser {
     private tryParseArgumentClose(openingBracePosition: Position): Result<true, ParserError> {
         // Parse: {value, number, ::currency/GBP }
         //
-        if (this.isEOF || this.char !== '}') {
+        if (this.isEOF() || this.char() !== '}') {
             return this.error(
                 ErrorKind.EXPECT_ARGUMENT_CLOSING_BRACE,
                 createLocation(openingBracePosition, this.clonePosition()),
@@ -687,8 +687,8 @@ export class Parser {
         let nestedBraces = 0;
 
         const startPosition = this.clonePosition();
-        while (!this.isEOF) {
-            const ch = this.char;
+        while (!this.isEOF()) {
+            const ch = this.char();
             switch (ch) {
                 case "'": {
                     // Treat apostrophe as quoting but include it in the style part.
@@ -713,7 +713,7 @@ export class Parser {
                         nestedBraces -= 1;
                     } else {
                         return {
-                            val: this.message.slice(startPosition.offset, this.offset),
+                            val: this.message.slice(startPosition.offset, this.offset()),
                             err: null,
                         };
                     }
@@ -723,7 +723,7 @@ export class Parser {
             }
         }
         return {
-            val: this.message.slice(startPosition.offset, this.offset),
+            val: this.message.slice(startPosition.offset, this.offset()),
             err: null,
         };
     }
@@ -804,7 +804,7 @@ export class Parser {
                         return result;
                     }
                     selectorLocation = createLocation(startPosition, this.clonePosition());
-                    selector = this.message.slice(startPosition.offset, this.offset);
+                    selector = this.message.slice(startPosition.offset, this.offset());
                 } else {
                     break;
                 }
@@ -901,8 +901,8 @@ export class Parser {
         }
 
         let digits = '';
-        while (!this.isEOF) {
-            const ch = this.char;
+        while (!this.isEOF()) {
+            const ch = this.char();
             if (ch >= '0' && ch <= '9') {
                 digits += ch;
                 this.bump();
@@ -925,12 +925,12 @@ export class Parser {
         return {val: decimal, err: null};
     }
 
-    private get offset(): number {
+    private offset(): number {
         return this.position.offset;
     }
 
-    private get isEOF(): boolean {
-        return this.offset === this.message.length;
+    private isEOF(): boolean {
+        return this.offset() === this.message.length;
     }
 
     private clonePosition(): Position {
@@ -941,7 +941,7 @@ export class Parser {
         };
     }
 
-    private get codePoint(): number {
+    private codePoint(): number {
         const offset = this.position.offset;
         if (offset >= this.message.length) {
             throw Error('out of bound');
@@ -957,8 +957,8 @@ export class Parser {
      * Return the character at the current position of the parser.
      * Throws if the index is out of bound.
      */
-    private get char(): string {
-        return String.fromCodePoint(this.codePoint);
+    private char(): string {
+        return String.fromCodePoint(this.codePoint());
     }
 
     private error(kind: ErrorKind, location: Location): Result<never, ParserError> {
@@ -974,10 +974,10 @@ export class Parser {
 
     /** Bump the parser to the next UTF-16 code unit. */
     private bump(): void {
-        if (this.isEOF) {
+        if (this.isEOF()) {
             return;
         }
-        const code = this.codePoint;
+        const code = this.codePoint();
         if (code === 10 /* '\n' */) {
             this.position.line += 1;
             this.position.column = 1;
@@ -996,7 +996,7 @@ export class Parser {
      * and return false.
      */
     private bumpIf(prefix: string): boolean {
-        if (this.message.startsWith(prefix, this.offset)) {
+        if (this.message.startsWith(prefix, this.offset())) {
             for (let i = 0; i < prefix.length; i++) {
                 this.bump();
             }
@@ -1010,7 +1010,7 @@ export class Parser {
      * Otherwise bump to the end of the file and return `false`.
      */
     private bumpUntil(pattern: string): boolean {
-        const currentOffset = this.offset;
+        const currentOffset = this.offset();
         const index = this.message.indexOf(pattern, currentOffset);
         if (index >= 0) {
             this.bumpTo(index);
@@ -1026,15 +1026,15 @@ export class Parser {
      * If target offset is beyond the end of the input, bump the parser to the end of the input.
      */
     private bumpTo(targetOffset: number) {
-        if (this.offset > targetOffset) {
+        if (this.offset() > targetOffset) {
             throw Error(
-                `targetOffset ${targetOffset} must be greater than or equal to the current offset ${this.offset}`,
+                `targetOffset ${targetOffset} must be greater than or equal to the current offset ${this.offset()}`,
             );
         }
 
         targetOffset = Math.min(targetOffset, this.message.length);
         while (true) {
-            const offset = this.offset;
+            const offset = this.offset();
             if (offset === targetOffset) {
                 break;
             }
@@ -1043,7 +1043,7 @@ export class Parser {
             }
 
             this.bump();
-            if (this.isEOF) {
+            if (this.isEOF()) {
                 break;
             }
         }
@@ -1051,7 +1051,7 @@ export class Parser {
 
     /** advance the parser through all whitespace to the next non-whitespace code unit. */
     private bumpSpace() {
-        while (!this.isEOF && WHITESPACE_RE.test(this.char)) {
+        while (!this.isEOF() && WHITESPACE_RE.test(this.char())) {
             this.bump();
         }
     }
@@ -1061,11 +1061,11 @@ export class Parser {
      * If the input has been exhausted, then this returns null.
      */
     private peek(): number | null {
-        if (this.isEOF) {
+        if (this.isEOF()) {
             return null;
         }
-        const code = this.codePoint;
-        const offset = this.offset;
+        const code = this.codePoint();
+        const offset = this.offset();
         const nextCode = this.message.charCodeAt(offset + (code >= 0x10000 ? 2 : 1));
         return nextCode ?? null;
     }
