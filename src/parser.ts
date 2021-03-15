@@ -38,7 +38,7 @@ function createLocation(start: Position, end: Position): Location {
 }
 
 const WHITESPACE_RE = /^\p{White_Space}$/u;
-const PATTERN_SYNTAX_RE = /^\p{Pattern_Syntax}$/u;
+const IDENTIFIER_PREFIX_RE = /([^\p{White_Space}\p{Pattern_Syntax}]*)/uy;
 
 export class Parser {
     private message: string;
@@ -438,24 +438,18 @@ export class Parser {
     private parseIdentifierIfPossible(): {value: string; location: Location} {
         const startingPosition = this.clonePosition();
 
-        while (true) {
-            if (this.isEOF()) {
-                break;
-            }
-            const ch = String.fromCodePoint(this.char());
-            if (WHITESPACE_RE.test(ch) || PATTERN_SYNTAX_RE.test(ch)) {
-                break;
-            }
-            this.bump();
-        }
+        const startOffset = this.offset();
+        IDENTIFIER_PREFIX_RE.lastIndex = startOffset;
+        const match = IDENTIFIER_PREFIX_RE.exec(this.message)!;
+        const value = match[1] ?? '';
+        const endOffset = startOffset + value.length;
+
+        this.bumpTo(endOffset);
 
         const endPosition = this.clonePosition();
         const location = createLocation(startingPosition, endPosition);
 
-        return {
-            value: this.message.slice(startingPosition.offset, endPosition.offset),
-            location,
-        };
+        return {value, location};
     }
 
     private parseArgumentOptions(

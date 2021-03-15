@@ -46,18 +46,18 @@ console.log('string_msg AST length', JSON.stringify(parse(stringMsg)).length);
 function run(parse) {
     new benchmark.Suite()
         .add('complex_msg', () => parse(complexMsg))
-        // .add('normal_msg', () => parse(normalMsg))
-        // .add('simple_msg', () => parse(simpleMsg))
-        // .add('string_msg', () => parse(stringMsg))
+        .add('normal_msg', () => parse(normalMsg))
+        .add('simple_msg', () => parse(simpleMsg))
+        .add('string_msg', () => parse(stringMsg))
         .on('cycle', function (event) {
             console.log(String(event.target));
         })
         .run();
 }
 
-// console.log();
-// console.log('== Baseline ==');
-// run(baselineParse);
+console.log();
+console.log('== Baseline ==');
+run(baselineParse);
 console.log();
 console.log('== This package ==');
 run(parse);
