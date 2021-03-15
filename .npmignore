@@ -6,3 +6,5 @@
 /.prettierrc
 *.test.ts.snap
 *.test.ts.md
+perf.data*
+isolate-*.log
