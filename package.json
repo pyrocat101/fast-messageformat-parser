@@ -21,7 +21,7 @@
         "build": "tsc -p .",
         "clean": "rm -rf dist",
         "bench": "node benchmark",
-        "prepublish": "yarn clean && yarn build"
+        "prepublish": "yarn test && yarn clean && yarn build"
     },
     "ava": {
         "typescript": {
