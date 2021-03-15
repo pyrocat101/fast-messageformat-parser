@@ -37,7 +37,6 @@ function createLocation(start: Position, end: Position): Location {
     return {start, end};
 }
 
-const WHITESPACE_RE = /^\p{White_Space}$/u;
 const IDENTIFIER_PREFIX_RE = /([^\p{White_Space}\p{Pattern_Syntax}]*)/uy;
 
 export class Parser {
@@ -1045,7 +1044,7 @@ export class Parser {
 
     /** advance the parser through all whitespace to the next non-whitespace code unit. */
     private bumpSpace() {
-        while (!this.isEOF() && WHITESPACE_RE.test(String.fromCodePoint(this.char()))) {
+        while (!this.isEOF() && _isWhiteSpace(this.char())) {
             this.bump();
         }
     }
@@ -1073,26 +1072,47 @@ function _isAlphaOrSlash(codepoint: number): boolean {
     return _isAlpha(codepoint) || codepoint === 47 /* '/' */;
 }
 
-function _isPotentialElementNameChar(codepoint: number): boolean {
+/** See `parseTag` function docs. */
+function _isPotentialElementNameChar(c: number): boolean {
     return (
-        codepoint === 45 /* '-' */ ||
-        codepoint === 46 /* '.' */ ||
-        (codepoint >= 48 && codepoint <= 57) /* 0..9 */ ||
-        codepoint === 95 /* '_' */ ||
-        (codepoint >= 97 && codepoint <= 122) /** a..z */ ||
-        (codepoint >= 65 && codepoint <= 90) /* A..Z */ ||
-        codepoint == 0xb7 ||
-        (codepoint >= 0xc0 && codepoint <= 0xd6) ||
-        (codepoint >= 0xd8 && codepoint <= 0xf6) ||
-        (codepoint >= 0xf8 && codepoint <= 0x37d) ||
-        (codepoint >= 0x37f && codepoint <= 0x1fff) ||
-        (codepoint >= 0x200c && codepoint <= 0x200d) ||
-        (codepoint >= 0x203f && codepoint <= 0x2040) ||
-        (codepoint >= 0x2070 && codepoint <= 0x218f) ||
-        (codepoint >= 0x2c00 && codepoint <= 0x2fef) ||
-        (codepoint >= 0x3001 && codepoint <= 0xd7ff) ||
-        (codepoint >= 0xf900 && codepoint <= 0xfdcf) ||
-        (codepoint >= 0xfdf0 && codepoint <= 0xfffd) ||
-        (codepoint >= 0x10000 && codepoint <= 0xeffff)
+        c === 45 /* '-' */ ||
+        c === 46 /* '.' */ ||
+        (c >= 48 && c <= 57) /* 0..9 */ ||
+        c === 95 /* '_' */ ||
+        (c >= 97 && c <= 122) /** a..z */ ||
+        (c >= 65 && c <= 90) /* A..Z */ ||
+        c == 0xb7 ||
+        (c >= 0xc0 && c <= 0xd6) ||
+        (c >= 0xd8 && c <= 0xf6) ||
+        (c >= 0xf8 && c <= 0x37d) ||
+        (c >= 0x37f && c <= 0x1fff) ||
+        (c >= 0x200c && c <= 0x200d) ||
+        (c >= 0x203f && c <= 0x2040) ||
+        (c >= 0x2070 && c <= 0x218f) ||
+        (c >= 0x2c00 && c <= 0x2fef) ||
+        (c >= 0x3001 && c <= 0xd7ff) ||
+        (c >= 0xf900 && c <= 0xfdcf) ||
+        (c >= 0xfdf0 && c <= 0xfffd) ||
+        (c >= 0x10000 && c <= 0xeffff)
+    );
+}
+
+/**
+ * Code point equivalent of regex `\p{White_Space}`.
+ * From: https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+ */
+function _isWhiteSpace(c: number) {
+    return (
+        (c >= 0x0009 && c <= 0x000d) ||
+        c === 0x0020 ||
+        c === 0x0085 ||
+        c === 0x00a0 ||
+        c === 0x1680 ||
+        (c >= 0x2000 && c <= 0x200a) ||
+        c === 0x2028 ||
+        c === 0x2029 ||
+        c === 0x202f ||
+        c === 0x205f ||
+        c === 0x3000
     );
 }
