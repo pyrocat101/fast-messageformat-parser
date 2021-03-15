@@ -12,14 +12,14 @@ simple_msg AST length 364
 string_msg AST length 131
 
 == Baseline ==
-complex_msg x 4,270 ops/sec ±0.61% (89 runs sampled)
-normal_msg x 33,758 ops/sec ±0.78% (92 runs sampled)
-simple_msg x 175,172 ops/sec ±0.24% (95 runs sampled)
-string_msg x 214,193 ops/sec ±0.24% (93 runs sampled)
+complex_msg x 4,192 ops/sec ±0.83% (87 runs sampled)
+normal_msg x 33,382 ops/sec ±0.64% (95 runs sampled)
+simple_msg x 178,051 ops/sec ±0.29% (96 runs sampled)
+string_msg x 217,228 ops/sec ±0.27% (93 runs sampled)
 
 == This package ==
-complex_msg x 8,916 ops/sec ±0.57% (91 runs sampled)
-normal_msg x 69,257 ops/sec ±0.31% (95 runs sampled)
-simple_msg x 441,932 ops/sec ±0.15% (95 runs sampled)
-string_msg x 646,199 ops/sec ±0.20% (97 runs sampled)
+complex_msg x 12,691 ops/sec ±0.23% (95 runs sampled)
+normal_msg x 103,990 ops/sec ±0.50% (94 runs sampled)
+simple_msg x 670,408 ops/sec ±0.20% (95 runs sampled)
+string_msg x 763,008 ops/sec ±0.25% (93 runs sampled)
 ```

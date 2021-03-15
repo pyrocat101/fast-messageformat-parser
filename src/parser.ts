@@ -934,7 +934,11 @@ export class Parser {
     }
 
     private clonePosition(): Position {
-        return {...this.position};
+        return {
+            offset: this.position.offset,
+            line: this.position.line,
+            column: this.position.column,
+        };
     }
 
     private get codePoint(): number {
