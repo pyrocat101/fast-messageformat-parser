@@ -228,11 +228,6 @@ export class Parser {
 
         let value = '';
         while (true) {
-            if (this.bumpIf("''")) {
-                value += "'";
-                continue;
-            }
-
             const parseQuoteResult = this.tryParseQuote(parentArgType);
             if (parseQuoteResult) {
                 value += parseQuoteResult;
@@ -288,6 +283,11 @@ export class Parser {
         // Parse escaped char following the apostrophe, or early return if there is no escaped char.
         // Check if is valid escaped character
         switch (this.peek()) {
+            case 39 /* `'` */:
+                // double quote, should return as a single quote.
+                this.bump();
+                this.bump();
+                return "'";
             // '{', '<', '>', '}'
             case 123:
             case 60:
