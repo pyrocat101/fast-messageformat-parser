@@ -66,17 +66,17 @@ export class Parser {
         let elements: MessageFormatElement[] = [];
 
         while (!this.isEOF()) {
-            const char = this.char();
-            if (char === '{') {
+            const char = this.codePoint();
+            if (char === 123 /* `{` */) {
                 const result = this.parseArgument(nestingLevel, expectingCloseTag);
                 if (result.err) {
                     return result;
                 }
                 elements.push(result.val);
-            } else if (char === '}' && nestingLevel > 0) {
+            } else if (char === 125 /* `}` */ && nestingLevel > 0) {
                 break;
             } else if (
-                char === '#' &&
+                char === 35 /* `#` */ &&
                 (parentArgType === 'plural' || parentArgType === 'selectordinal')
             ) {
                 const position = this.clonePosition();
@@ -86,7 +86,7 @@ export class Parser {
                     location: createLocation(position, this.clonePosition()),
                 });
             } else if (
-                char === '<' &&
+                char === 60 /* `<` */ &&
                 !this.ignoreTag &&
                 this.peek() === 47 // char code for '/'
             ) {
@@ -98,7 +98,7 @@ export class Parser {
                         createLocation(this.clonePosition(), this.clonePosition()),
                     );
                 }
-            } else if (char === '<' && !this.ignoreTag && _isAlpha(this.peek() || 0)) {
+            } else if (char === 60 /* `<` */ && !this.ignoreTag && _isAlpha(this.peek() || 0)) {
                 const result = this.parseTag(nestingLevel, parentArgType);
                 if (result.err) {
                     return result;
@@ -264,7 +264,7 @@ export class Parser {
     tryParseLeftAngleBracket(): string | null {
         if (
             !this.isEOF() &&
-            this.char() === '<' &&
+            this.codePoint() === 60 /* `<` */ &&
             (this.ignoreTag ||
                 // If at the opening tag or closing tag position, bail.
                 !_isAlphaOrSlash(this.peek() || 0))
@@ -281,7 +281,7 @@ export class Parser {
      * nested messages as on the top level of the pattern. The new behavior is otherwise compatible.
      */
     private tryParseQuote(parentArgType: ArgType): string | null {
-        if (this.isEOF() || this.char() !== "'") {
+        if (this.isEOF() || this.codePoint() !== 39 /* `'` */) {
             return null;
         }
 
@@ -303,15 +303,15 @@ export class Parser {
         }
 
         this.bump(); // apostrophe
-        let value = this.char(); // escaped char
+        const codePoints = [this.codePoint()]; // escaped char
         this.bump();
 
         // read chars until the optional closing apostrophe is found
         while (!this.isEOF()) {
-            const ch = this.char();
-            if (ch === "'") {
+            const ch = this.codePoint();
+            if (ch === 39 /* `'` */) {
                 if (this.peek() === 39 /* `'` */) {
-                    value += "'";
+                    codePoints.push(39);
                     // Bump one more time because we need to skip 2 characters.
                     this.bump();
                 } else {
@@ -320,30 +320,31 @@ export class Parser {
                     break;
                 }
             } else {
-                value += ch;
+                codePoints.push(ch);
             }
             this.bump();
         }
 
-        return value;
+        return String.fromCodePoint(...codePoints);
     }
 
     private tryParseUnquoted(nestingLevel: number, parentArgType: ArgType): string | null {
         if (this.isEOF()) {
             return null;
         }
-        const ch = this.char();
+        const ch = this.codePoint();
 
         if (
-            ch === '<' ||
-            ch === '{' ||
-            (ch === '#' && (parentArgType === 'plural' || parentArgType === 'selectordinal')) ||
-            (ch === '}' && nestingLevel > 0)
+            ch === 60 /* `<` */ ||
+            ch === 123 /* `{` */ ||
+            (ch === 35 /* `#` */ &&
+                (parentArgType === 'plural' || parentArgType === 'selectordinal')) ||
+            (ch === 125 /* `}` */ && nestingLevel > 0)
         ) {
             return null;
         } else {
             this.bump();
-            return ch;
+            return String.fromCodePoint(ch);
         }
     }
 
@@ -363,7 +364,7 @@ export class Parser {
             );
         }
 
-        if (this.char() === '}') {
+        if (this.codePoint() === 125 /* `}` */) {
             this.bump();
             return this.error(
                 ErrorKind.EMPTY_ARGUMENT,
@@ -389,9 +390,9 @@ export class Parser {
             );
         }
 
-        switch (this.char()) {
+        switch (this.codePoint()) {
             // Simple argument: `{name}`
-            case '}': {
+            case 125 /* `}` */: {
                 this.bump(); // `}`
                 return {
                     val: {
@@ -404,7 +405,7 @@ export class Parser {
                 };
             }
             // Argument with options: `{name, format, ...}`
-            case ',': {
+            case 44 /* `,` */: {
                 this.bump(); // `,`
                 this.bumpSpace();
 
@@ -441,7 +442,7 @@ export class Parser {
             if (this.isEOF()) {
                 break;
             }
-            const ch = this.char();
+            const ch = String.fromCodePoint(this.codePoint());
             if (WHITESPACE_RE.test(ch) || PATTERN_SYNTAX_RE.test(ch)) {
                 break;
             }
@@ -670,7 +671,7 @@ export class Parser {
     private tryParseArgumentClose(openingBracePosition: Position): Result<true, ParserError> {
         // Parse: {value, number, ::currency/GBP }
         //
-        if (this.isEOF() || this.char() !== '}') {
+        if (this.isEOF() || this.codePoint() !== 125 /* `}` */) {
             return this.error(
                 ErrorKind.EXPECT_ARGUMENT_CLOSING_BRACE,
                 createLocation(openingBracePosition, this.clonePosition()),
@@ -688,9 +689,9 @@ export class Parser {
 
         const startPosition = this.clonePosition();
         while (!this.isEOF()) {
-            const ch = this.char();
+            const ch = this.codePoint();
             switch (ch) {
-                case "'": {
+                case 39 /* `'` */: {
                     // Treat apostrophe as quoting but include it in the style part.
                     // Find the end of the quoted literal text.
                     this.bump();
@@ -704,11 +705,11 @@ export class Parser {
                     }
                     this.bump();
                 }
-                case '{': {
+                case 123 /* `{` */: {
                     nestedBraces += 1;
                     this.bump();
                 }
-                case '}': {
+                case 125 /* `}` */: {
                     if (nestedBraces > 0) {
                         nestedBraces -= 1;
                     } else {
@@ -902,8 +903,8 @@ export class Parser {
 
         let digits = '';
         while (!this.isEOF()) {
-            const ch = this.char();
-            if (ch >= '0' && ch <= '9') {
+            const ch = this.codePoint();
+            if (ch >= 48 /* `0` */ && ch <= 57 /* `9` */) {
                 digits += ch;
                 this.bump();
             } else {
@@ -953,13 +954,13 @@ export class Parser {
         return code;
     }
 
-    /**
-     * Return the character at the current position of the parser.
-     * Throws if the index is out of bound.
-     */
-    private char(): string {
-        return String.fromCodePoint(this.codePoint());
-    }
+    // /**
+    //  * Return the character at the current position of the parser.
+    //  * Throws if the index is out of bound.
+    //  */
+    // private char(): string {
+    //     return String.fromCodePoint(this.codePoint());
+    // }
 
     private error(kind: ErrorKind, location: Location): Result<never, ParserError> {
         return {
@@ -1051,7 +1052,7 @@ export class Parser {
 
     /** advance the parser through all whitespace to the next non-whitespace code unit. */
     private bumpSpace() {
-        while (!this.isEOF() && WHITESPACE_RE.test(this.char())) {
+        while (!this.isEOF() && WHITESPACE_RE.test(String.fromCodePoint(this.codePoint()))) {
             this.bump();
         }
     }
