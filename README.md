@@ -2,24 +2,18 @@
 
 Hand-written ICU MessageFormat parser with compatible output as
 [`intl-messageformat-parser`](https://www.npmjs.com/package/intl-messageformat-parser)
-but 3x - 4x as fast.
+but more than 4 times as fast.
 
 ```
-$ node benchmark
-complex_msg AST length 10861
-normal_msg AST length 1665
-simple_msg AST length 364
-string_msg AST length 131
-
 == Baseline ==
-complex_msg x 4,267 ops/sec ±0.85% (90 runs sampled)
-normal_msg x 34,091 ops/sec ±0.68% (94 runs sampled)
-simple_msg x 179,517 ops/sec ±0.27% (95 runs sampled)
-string_msg x 221,118 ops/sec ±0.28% (92 runs sampled)
+complex_msg x 4,245 ops/sec ±0.52% (91 runs sampled)
+normal_msg x 33,466 ops/sec ±0.54% (93 runs sampled)
+simple_msg x 175,455 ops/sec ±0.20% (95 runs sampled)
+string_msg x 214,517 ops/sec ±0.34% (91 runs sampled)
 
 == This package ==
-complex_msg x 14,872 ops/sec ±0.22% (92 runs sampled)
-normal_msg x 117,881 ops/sec ±0.53% (94 runs sampled)
-simple_msg x 817,603 ops/sec ±0.18% (96 runs sampled)
-string_msg x 974,826 ops/sec ±0.30% (96 runs sampled)
+complex_msg x 17,826 ops/sec ±0.19% (93 runs sampled)
+normal_msg x 132,184 ops/sec ±0.38% (94 runs sampled)
+simple_msg x 988,586 ops/sec ±0.45% (93 runs sampled)
+string_msg x 1,344,538 ops/sec ±0.24% (94 runs sampled)
 ```
