@@ -290,6 +290,10 @@ test('open_close_tag_2', snapshot, '<test-tag>foo</test-tag>', {});
 
 test('open_close_tag_3', snapshot, '<test-tag>foo {0} bar</test-tag>', {});
 
+test('invalid_closing_tag_1', snapshot, '<test>a</123>', {});
+
+test('invalid_closing_tag_2', snapshot, '<test>a</', {});
+
 test(
     'open_close_tag_with_nested_arg',
     snapshot,

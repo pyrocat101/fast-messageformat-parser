@@ -171,7 +171,6 @@ export class Parser {
 
                 const closingTagNameStartPosition = this.clonePosition();
                 const closingTagName = this.parseTagName();
-
                 if (tagName !== closingTagName) {
                     return this.error(
                         ErrorKind.UNMATCHED_CLOSING_TAG,
@@ -210,8 +209,12 @@ export class Parser {
         }
     }
 
+    /**
+     * This method assumes that the caller has peeked ahead for the first tag character.
+     */
     private parseTagName(): string {
         const startOffset = this.offset();
+
         this.bump(); // the first tag name character
         while (!this.isEOF() && _isPotentialElementNameChar(this.char())) {
             this.bump();
