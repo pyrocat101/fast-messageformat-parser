@@ -337,5 +337,60 @@ test('nested_tags_1', snapshot, 'this is <a>nested <b>{placeholder}</b></a>', {}
 // See: https://github.com/formatjs/formatjs/issues/1845
 test('less_than_sign_1', snapshot, '< {level, select, A {1} 4 {2} 3 {3} 2{6} 1{12}} hours', {});
 
-// TODO: port https://github.com/formatjs/formatjs/blob/main/packages/intl-messageformat-parser/tests/nested.test.ts
+test(
+    'nested_1',
+    snapshot,
+    dedent`
+    {gender_of_host, select,
+      female {
+        {num_guests, plural, offset:1
+          =0 {{host} does not give a party.}
+          =1 {{host} invites {guest} to her party.}
+          =2 {{host} invites {guest} and one other person to her party.}
+          other {{host} invites {guest} and # other people to her party.}}}
+      male {
+        {num_guests, plural, offset:1
+          =0 {{host} does not give a party.}
+          =1 {{host} invites {guest} to his party.}
+          =2 {{host} invites {guest} and one other person to his party.}
+          other {{host} invites {guest} and # other people to his party.}}}
+      other {
+        {num_guests, plural, offset:1
+          =0 {{host} does not give a party.}
+          =1 {{host} invites {guest} to their party.}
+          =2 {{host} invites {guest} and one other person to their party.}
+          other {{host} invites {guest} and # other people to their party.}}}}
+    `,
+    {},
+);
+
+test(
+    'negative_offset_1',
+    snapshot,
+    `{c, plural, offset:-2 =-1 { {text} project} other { {text} projects}}`,
+    {},
+);
+
+test('not_escaped_pound_1', snapshot, `'#'`, {});
+
+test(
+    'escaped_pound_1',
+    snapshot,
+    `{numPhotos, plural, =0{no photos} =1{one photo} other{'#' photos}}`,
+    {},
+);
+
+/**
+ * @see https://unicode-org.github.io/icu/userguide/format_parse/messages/#quotingescaping
+ * @see https://github.com/formatjs/formatjs/issues/97
+ */
+test('quoted_string_5', snapshot, "This '{isn''t}' obvious", {});
+
+test(
+    'selectordinal_1',
+    snapshot,
+    `{floor, selectordinal, =0{ground} one{#st} two{#nd} few{#rd} other{#th}} floor`,
+    {},
+);
+
 // TODO: port https://github.com/formatjs/formatjs/blob/main/packages/intl-messageformat-parser/tests/index.test.ts

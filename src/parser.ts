@@ -28,6 +28,16 @@ export interface ParserOptions {
      * any attributes
      */
     ignoreTag?: boolean;
+    /**
+     * Should `select`, `selectordinal`, and `plural` arguments always include
+     * the `other` case clause.
+     */
+    requiresOtherClause?: boolean;
+    /**
+     * Whether to parse number/datetime skeleton
+     * into Intl.NumberFormatOptions and Intl.DateTimeFormatOptions, respectively.
+     */
+    shouldParseSkeletons?: boolean;
 }
 
 export type Result<T, E> = {val: T; err: null} | {val: null; err: E};
@@ -42,12 +52,17 @@ const IDENTIFIER_PREFIX_RE = /([^\p{White_Space}\p{Pattern_Syntax}]*)/uy;
 export class Parser {
     private message: string;
     private position: Position;
+
     private ignoreTag: boolean;
+    private requiresOtherClause: boolean;
+    private shouldParseSkeletons?: boolean;
 
     constructor(message: string, options: ParserOptions) {
         this.message = message;
         this.position = {offset: 0, line: 1, column: 1};
         this.ignoreTag = !!options.ignoreTag;
+        this.requiresOtherClause = !!options.requiresOtherClause;
+        this.shouldParseSkeletons = !!options.shouldParseSkeletons;
     }
 
     parse(): Result<MessageFormatElement[], ParserError> {
@@ -536,8 +551,8 @@ export class Parser {
                             type: SKELETON_TYPE.dateTime,
                             pattern: skeleton,
                             location: styleAndLocation.styleLocation,
-                            // TODO: parse this
-                            parsedOptions: {},
+                            // TODO
+                            parsedOptions: this.shouldParseSkeletons ? {} : {},
                         };
 
                         const type = argType === 'date' ? TYPE.date : TYPE.time;
@@ -758,7 +773,7 @@ export class Parser {
                 tokens,
                 location,
                 // TODO
-                parsedOptions: {},
+                parsedOptions: this.shouldParseSkeletons ? {} : {},
             },
             err: null,
         };
@@ -873,9 +888,7 @@ export class Parser {
             );
         }
 
-        // TODO: make this configurable
-        const requiresOtherClause = false;
-        if (requiresOtherClause && !hasOtherClause) {
+        if (this.requiresOtherClause && !hasOtherClause) {
             return this.error(
                 ErrorKind.MISSING_OTHER_CLAUSE,
                 createLocation(this.clonePosition(), this.clonePosition()),
